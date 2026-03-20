@@ -8,7 +8,7 @@ import PayOrderApi from '@/sheep/api/pay/order';
 /**
  * 支付
  *
- * @param {String} payment = ['wechat','alipay','wallet','mock']  	- 支付方式
+ * @param {String} payment = ['wechat','wallet','mock']  	- 支付方式
  * @param {String} orderType = ['goods','recharge','groupon']  	- 订单类型
  * @param {String} id					- 订单号
  */
@@ -27,9 +27,6 @@ export default class SheepPay {
         wechat: () => {
           this.wechatOfficialAccountPay();
         },
-        alipay: () => {
-          this.redirectPay(); // 现在公众号可以直接跳转支付宝页面
-        },
         wallet: () => {
           this.walletPay();
         },
@@ -40,9 +37,6 @@ export default class SheepPay {
       WechatMiniProgram: {
         wechat: () => {
           this.wechatMiniProgramPay();
-        },
-        alipay: () => {
-          this.copyPayLink();
         },
         wallet: () => {
           this.walletPay();
@@ -55,9 +49,6 @@ export default class SheepPay {
         wechat: () => {
           this.wechatAppPay();
         },
-        alipay: () => {
-          this.alipay();
-        },
         wallet: () => {
           this.walletPay();
         },
@@ -68,9 +59,6 @@ export default class SheepPay {
       H5: {
         wechat: () => {
           this.wechatWapPay();
-        },
-        alipay: () => {
-          this.redirectPay();
         },
         wallet: () => {
           this.walletPay();
@@ -157,15 +145,6 @@ export default class SheepPay {
     }
   }
 
-  // 支付链接(支付宝 wap 支付)
-  async redirectPay() {
-    let { code, data } = await this.prepay('alipay_wap');
-    if (code !== 0) {
-      return;
-    }
-    location.href = data.displayContent;
-  }
-
   // #endif
 
   // 微信小程序支付
@@ -207,50 +186,6 @@ export default class SheepPay {
   async mockPay() {
     const { code } = await this.prepay('mock');
     code === 0 && this.payResult('success');
-  }
-
-  // 支付宝复制链接支付（通过支付宝 wap 支付实现）
-  async copyPayLink() {
-    let { code, data } = await this.prepay('alipay_wap');
-    if (code !== 0) {
-      return;
-    }
-    // 引入 showModal 点击确认：复制链接；
-    uni.showModal({
-      title: '支付宝支付',
-      content: '复制链接到外部浏览器',
-      confirmText: '复制链接',
-      success: (res) => {
-        if (res.confirm) {
-          sheep.$helper.copyText(data.displayContent);
-        }
-      },
-    });
-  }
-
-  // 支付宝支付（App）
-  async alipay() {
-    let that = this;
-    const { code, data } = await this.prepay('alipay_app');
-    if (code !== 0) {
-      return;
-    }
-
-    // TODO @芋艿：【可优化】如果是沙箱支付，EnvUtils.setEnv(EnvUtils.EnvEnum.SANDBOX)，相关 https://t.zsxq.com/yjyJQ
-    uni.requestPayment({
-      provider: 'alipay',
-      orderInfo: data.displayContent, // 直接使用返回的支付参数
-      success: (res) => {
-        that.payResult('success');
-      },
-      fail: (err) => {
-        if (err.errMsg === 'requestPayment:fail [paymentAlipay:62001]user cancel') {
-          sheep.$helper.toast('支付已手动取消');
-        } else {
-          that.payResult('fail');
-        }
-      },
-    });
   }
 
   // 微信支付（App）
@@ -316,12 +251,6 @@ export function getPayMethods(channels) {
       disabled: true,
     },
     {
-      icon: '/static/img/shop/pay/alipay.png',
-      title: '支付宝支付',
-      value: 'alipay',
-      disabled: true,
-    },
-    {
       icon: '/static/img/shop/pay/wallet.png',
       title: '余额支付',
       value: 'wallet',
@@ -352,16 +281,6 @@ export function getPayMethods(channels) {
     wechatMethod.disabled = false;
   }
 
-  // 2. 处理【支付宝支付】
-  const alipayMethod = payMethods[1];
-  if (
-    (platform === 'H5' && channels.includes('alipay_wap')) ||
-    (platform === 'WechatOfficialAccount' && channels.includes('alipay_wap')) ||
-    (platform === 'WechatMiniProgram' && channels.includes('alipay_wap')) ||
-    (platform === 'App' && channels.includes('alipay_app'))
-  ) {
-    alipayMethod.disabled = false;
-  }
   // 3. 处理【余额支付】
   const walletMethod = payMethods[2];
   if (channels.includes('wallet')) {
