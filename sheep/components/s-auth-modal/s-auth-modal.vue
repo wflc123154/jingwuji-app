@@ -14,27 +14,7 @@
         >
           微信手机号一键登录
         </button>
-
-        <view class="switch-login ss-flex ss-row-center ss-m-t-30">
-          <view class="switch-item" @tap="showAuthModal('smsLogin')">短信验证码登录</view>
-          <view class="split">|</view>
-          <view class="switch-item" @tap="showAuthModal('accountLogin')">账号密码登录</view>
-        </view>
       </view>
-
-      <account-login
-        v-if="authType === 'accountLogin'"
-        :agreeStatus="state.protocol"
-        @onConfirm="onConfirm"
-        @loginSuccess="handleLoginSuccess"
-      />
-
-      <sms-login
-        v-if="authType === 'smsLogin'"
-        :agreeStatus="state.protocol"
-        @onConfirm="onConfirm"
-        @loginSuccess="handleLoginSuccess"
-      />
 
       <reset-password v-if="authType === 'resetPassword'" />
       <change-mobile v-if="authType === 'changeMobile'" />
@@ -42,7 +22,7 @@
       <mp-authorization v-if="authType === 'mpAuthorization'" />
 
       <view
-        v-if="['wechatLogin', 'accountLogin', 'smsLogin'].includes(authType)"
+        v-if="authType === 'wechatLogin'"
         class="agreement-box ss-flex ss-flex-col ss-col-center"
         :class="{ shake: currentProtocol }"
       >
@@ -69,8 +49,6 @@
 <script setup>
   import { computed, reactive, ref } from 'vue';
   import sheep from '@/sheep';
-  import accountLogin from './components/account-login.vue';
-  import smsLogin from './components/sms-login.vue';
   import resetPassword from './components/reset-password.vue';
   import changeMobile from './components/change-mobile.vue';
   import changePassword from './components/change-password.vue';
@@ -123,7 +101,7 @@
   const getPhoneNumber = async (e) => {
     if (!ensureAgreement()) return;
     if (e.detail.errMsg !== 'getPhoneNumber:ok') {
-      sheep.$helper.toast('未授权手机号，您仍可使用短信或账号密码登录');
+      sheep.$helper.toast('未授权手机号，无法登录');
       return;
     }
 
@@ -149,7 +127,7 @@
       return;
     }
 
-    sheep.$helper.toast('登录失败，请改用短信验证码或账号密码登录');
+    sheep.$helper.toast('登录失败，请稍后重试');
   };
 </script>
 
@@ -184,20 +162,6 @@
     align-items: center;
     font-size: 30rpx;
     font-weight: 500;
-  }
-
-  .switch-login {
-    color: #666;
-    font-size: 26rpx;
-  }
-
-  .switch-item {
-    color: var(--ui-BG-Main);
-    padding: 0 16rpx;
-  }
-
-  .split {
-    color: #bbb;
   }
 
   .agreement-row {

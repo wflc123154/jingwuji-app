@@ -62,7 +62,7 @@
       </uni-forms-item>
     </uni-forms>
 
-    <button v-if="!isLogin" class="ss-reset-button type-btn" @tap="showAuthModal('accountLogin')">
+    <button v-if="!isLogin" class="ss-reset-button type-btn" @tap="showAuthModal('wechatLogin')">
       返回登录
     </button>
   </view>
@@ -110,7 +110,7 @@
       return;
     }
     // 成功后，用户重新登录
-    showAuthModal('accountLogin')
+    showAuthModal('wechatLogin')
   };
 </script>
 
