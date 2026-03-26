@@ -41,8 +41,6 @@
     <s-seckill-block v-if="type === 'PromotionSeckill'" :data="data" :styles="styles" />
     <!-- 营销组件：积分商城 -->
     <s-point-block v-if="type === 'PromotionPoint'" :data="data" :styles="styles" />
-    <!-- 营销组件：小程序直播（暂时没有这个功能） -->
-    <s-live-block v-if="type === 'MpLive'" :data="data" :styles="styles" />
     <!-- 营销组件：优惠券 -->
     <s-coupon-block v-if="type === 'CouponCard'" :data="data" :styles="styles" />
     <!-- 营销组件：文章 -->
