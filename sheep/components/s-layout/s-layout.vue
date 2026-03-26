@@ -46,6 +46,8 @@
     </view>
 
     <view class="page-modal">
+      <!-- 首次进入协议弹窗 -->
+      <s-startup-modal />
       <!-- 全局授权弹窗 -->
       <s-auth-modal />
       <!-- 全局分享弹窗 -->
@@ -214,6 +216,7 @@
 
   // 组件中使用 onMounted 监听页面加载，不是页面组件不使用 onShow
   onMounted(()=>{
+    appStore.setCurrentRoute(sheep.$router.getCurrentRoute('route'));
     // #ifdef MP-ALIPAY
     uni.setNavigationBarTitle({
       title: "",

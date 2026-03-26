@@ -51,12 +51,12 @@
   import { ref, reactive, unref } from 'vue';
   import sheep from '@/sheep';
   import { mobile, password } from '@/sheep/validate/form';
-  import { showAuthModal, closeAuthModal } from '@/sheep/hooks/useModal';
+  import { showAuthModal } from '@/sheep/hooks/useModal';
   import AuthUtil from '@/sheep/api/member/auth';
 
   const accountLoginRef = ref(null);
 
-  const emits = defineEmits(['onConfirm']);
+  const emits = defineEmits(['onConfirm', 'loginSuccess']);
 
   const props = defineProps({
     agreeStatus: {
@@ -99,9 +99,9 @@
     }
 
     // 提交数据
-    const { code, data } = await AuthUtil.login(state.model);
+    const { code } = await AuthUtil.login(state.model);
     if (code === 0) {
-      closeAuthModal();
+      emits('loginSuccess');
     }
   }
 </script>

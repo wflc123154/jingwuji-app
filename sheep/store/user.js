@@ -92,6 +92,7 @@ const user = defineStore({
         uni.setStorageSync('refresh-token', refreshToken);
         this.loginAfter();
       }
+      app().setLoginStatus(this.isLogin);
       return this.isLogin;
     },
 

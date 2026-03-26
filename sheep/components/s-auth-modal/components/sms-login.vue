@@ -62,12 +62,12 @@
   import { ref, reactive, unref } from 'vue';
   import sheep from '@/sheep';
   import { code, mobile } from '@/sheep/validate/form';
-  import { showAuthModal, closeAuthModal, getSmsCode, getSmsTimer } from '@/sheep/hooks/useModal';
+  import { showAuthModal, getSmsCode, getSmsTimer } from '@/sheep/hooks/useModal';
   import AuthUtil from '@/sheep/api/member/auth';
 
   const smsLoginRef = ref(null);
 
-  const emits = defineEmits(['onConfirm']);
+  const emits = defineEmits(['onConfirm', 'loginSuccess']);
 
   const props = defineProps({
     agreeStatus: {
@@ -128,7 +128,7 @@
     // 提交数据
     const { code } = await AuthUtil.smsLogin(state.model);
     if (code === 0) {
-      closeAuthModal();
+      emits('loginSuccess');
     }
   }
 </script>

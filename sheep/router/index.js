@@ -57,12 +57,18 @@ const _go = (
     return;
   }
 
-  // 页面登录拦截
-  if (nextRoute.meta?.auth && !$store('user').isLogin) {
-    showAuthModal();
+  // 页面登录拦截（含“我的”页游客态拦截）
+  const needLogin = nextRoute.meta?.auth || page === '/pages/index/user';
+  if (needLogin && !$store('user').isLogin) {
+    showAuthModal('wechatLogin', {
+      kind: 'navigate',
+      path: page,
+      params: queryToParams(query),
+    });
     return;
   }
 
+  $store('app').setCurrentRoute(page);
   url = page;
   if (!isEmpty(query)) {
     url += `?${query}`;

@@ -95,7 +95,40 @@ const AuthUtil = {
       },
     });
   },
-  // 微信小程序的一键登录
+  // 微信预登录
+  wechatPrelogin: (loginCode) => {
+    return request({
+      url: '/auth/wechat/prelogin',
+      method: 'POST',
+      data: {
+        code: loginCode,
+      },
+      custom: {
+        isToken: false,
+        showLoading: false,
+        showError: false,
+      },
+    });
+  },
+  // 微信手机号一键登录
+  wechatPhoneLogin: (phoneCode, loginCode, loginSessionId) => {
+    return request({
+      url: '/auth/wechat/phone-login',
+      method: 'POST',
+      data: {
+        phoneCode,
+        loginCode,
+        loginSessionId,
+      },
+      custom: {
+        isToken: false,
+        showSuccess: true,
+        loadingMsg: '登录中',
+        successMsg: '登录成功',
+      },
+    });
+  },
+  // 兼容旧版接口
   weixinMiniAppLogin: (phoneCode, loginCode, state) => {
     return request({
       url: '/member/auth/weixin-mini-app-login',

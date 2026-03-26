@@ -36,6 +36,8 @@ let LoadingInstance = {
   count: 0,
 };
 
+let pendingAuthRequest = null;
+
 /**
  * 关闭loading
  */
@@ -73,7 +75,12 @@ http.interceptors.request.use(
   (config) => {
     // 自定义处理【auth 授权】：必须登录的接口，则跳出 AuthModal 登录弹窗
     if (config.custom.auth && !$store('user').isLogin) {
-      showAuthModal();
+      pendingAuthRequest = {
+        ...config,
+        header: { ...(config.header || {}) },
+        custom: { ...(config.custom || {}), auth: false },
+      };
+      showAuthModal('wechatLogin');
       return Promise.reject();
     }
 
@@ -111,8 +118,8 @@ http.interceptors.request.use(
  */
 http.interceptors.response.use(
   (response) => {
-    // 约定：如果是 /auth/ 下的 URL 地址，并且返回了 accessToken 说明是登录相关的接口，则自动设置登陆令牌
-    if (response.config.url.indexOf('/member/auth/') >= 0 && response.data?.data?.accessToken) {
+    // 约定：只要响应中返回了 accessToken，就自动设置登录令牌
+    if (response.data?.data?.accessToken) {
       $store('user').setToken(response.data.data.accessToken, response.data.data.refreshToken);
     }
 
@@ -280,7 +287,7 @@ const refreshToken = async (config) => {
 const handleAuthorized = () => {
   const userStore = $store('user');
   userStore.logout(true);
-  showAuthModal();
+  showAuthModal('wechatLogin');
   // 登录超时
   return Promise.reject({
     code: 401,
@@ -305,6 +312,15 @@ export const getTenantId = () => {
 
 const request = (config) => {
   return http.middleware(config);
+};
+
+export const replayPendingAuthRequest = async () => {
+  if (!pendingAuthRequest) {
+    return false;
+  }
+  const config = pendingAuthRequest;
+  pendingAuthRequest = null;
+  return request(config);
 };
 
 export default request;

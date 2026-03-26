@@ -31,6 +31,16 @@
   const template = computed(() => sheep.$store('app').template.user);
 
   onShow(() => {
+    if (!sheep.$store('user').isLogin) {
+      sheep.$store('app').setPendingLoginAction({
+        kind: 'navigate',
+        path: '/pages/index/user',
+      });
+      sheep.$helper.toast('请先登录');
+      sheep.$router.go('/pages/index/index');
+      sheep.$store('modal').auth = 'wechatLogin';
+      return;
+    }
     sheep.$store('user').updateUserData();
   });
 

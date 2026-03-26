@@ -1,137 +1,66 @@
 <template>
-  <!-- 规格弹窗 -->
   <su-popup :show="authType !== ''" round="10" :showClose="true" @close="closeAuthModal">
     <view class="login-wrap">
-      <!-- 1. 账号密码登录 accountLogin -->
+      <view v-if="authType === 'wechatLogin'" class="wechat-login-box">
+        <view class="head-box ss-m-b-40">
+          <view class="head-title head-title-animation">微信手机号一键登录</view>
+          <view class="head-subtitle">未注册手机号验证后将自动创建账号</view>
+        </view>
+
+        <button
+          class="ss-reset-button wechat-login-btn"
+          open-type="getPhoneNumber"
+          @getphonenumber="getPhoneNumber"
+        >
+          微信手机号一键登录
+        </button>
+
+        <view class="switch-login ss-flex ss-row-center ss-m-t-30">
+          <view class="switch-item" @tap="showAuthModal('smsLogin')">短信验证码登录</view>
+          <view class="split">|</view>
+          <view class="switch-item" @tap="showAuthModal('accountLogin')">账号密码登录</view>
+        </view>
+      </view>
+
       <account-login
         v-if="authType === 'accountLogin'"
         :agreeStatus="state.protocol"
         @onConfirm="onConfirm"
+        @loginSuccess="handleLoginSuccess"
       />
 
-      <!-- 2. 短信登录  smsLogin -->
       <sms-login
         v-if="authType === 'smsLogin'"
         :agreeStatus="state.protocol"
         @onConfirm="onConfirm"
+        @loginSuccess="handleLoginSuccess"
       />
 
-      <!-- 3. 忘记密码 resetPassword-->
       <reset-password v-if="authType === 'resetPassword'" />
-
-      <!-- 4. 绑定手机号 changeMobile -->
       <change-mobile v-if="authType === 'changeMobile'" />
-
-      <!-- 5. 修改密码 changePassword-->
       <changePassword v-if="authType === 'changePassword'" />
-
-      <!-- 6. 微信小程序授权 -->
       <mp-authorization v-if="authType === 'mpAuthorization'" />
 
-      <!-- 7. 第三方登录 -->
       <view
-        v-if="['accountLogin', 'smsLogin'].includes(authType)"
-        class="auto-login-box ss-flex ss-flex-col ss-row-center ss-col-center"
-      >
-        <!-- 7.1 微信小程序的快捷登录 -->
-        <view v-if="sheep.$platform.name === 'WechatMiniProgram'" class="ss-flex register-box">
-          <view class="register-title">还没有账号?</view>
-          <button
-            class="ss-reset-button login-btn"
-            open-type="getPhoneNumber"
-            @getphonenumber="getPhoneNumber"
-          >
-            快捷登录
-          </button>
-          <view class="circle" />
-        </view>
-
-        <!-- 7.2 微信的公众号、App、小程序的登录，基于 openid + code -->
-        <button
-          v-if="
-            ['WechatOfficialAccount', 'WechatMiniProgram', 'App'].includes(sheep.$platform.name) &&
-            sheep.$platform.isWechatInstalled
-          "
-          @tap="thirdLogin('wechat')"
-          class="ss-reset-button auto-login-btn"
-        >
-          <image
-            class="auto-login-img"
-            :src="sheep.$url.static('/static/img/shop/platform/wechat.png')"
-          />
-        </button>
-
-        <!-- 7.3 iOS 登录 TODO 芋艿：等后面搞 App 再弄 -->
-        <button
-          v-if="sheep.$platform.os === 'ios' && sheep.$platform.name === 'App'"
-          @tap="thirdLogin('apple')"
-          class="ss-reset-button auto-login-btn"
-        >
-          <image
-            class="auto-login-img"
-            :src="sheep.$url.static('/static/img/shop/platform/apple.png')"
-          />
-        </button>
-
-        <!-- 7.4 支付宝小程序登录 -->
-        <button
-          v-if="sheep.$platform.name === 'alipayMiniProgram'"
-          @tap="thirdLogin('alipay')"
-          class="ss-reset-button auto-login-btn"
-        >
-          <image
-            class="auto-login-img"
-            :src="sheep.$url.static('/static/img/shop/pay/alipay.png')"
-          />
-        </button>
-      </view>
-
-      <!-- 用户协议的勾选 -->
-      <view
-        v-if="['accountLogin', 'smsLogin'].includes(authType)"
+        v-if="['wechatLogin', 'accountLogin', 'smsLogin'].includes(authType)"
         class="agreement-box ss-flex ss-flex-col ss-col-center"
         :class="{ shake: currentProtocol }"
       >
-        <view class="agreement-title ss-m-b-20">请选择是否同意以下协议(请联网查看)：</view>
-        
-        <view class="agreement-options-container">
-          <!-- 同意选项 -->
-          <view class="agreement-option ss-m-b-20">
-            <view class="radio ss-flex ss-col-center" @tap="onAgree">
-              <radio
-                :checked="state.protocol === true"
-                color="var(--ui-BG-Main)"
-                style="transform: scale(0.8)"
-                @tap.stop="onAgree"
-              />
-              <view class="agreement-text ss-flex ss-col-center ss-m-l-8">
-                我已阅读并同意遵守
-                <view class="tcp-text" @tap.stop="onProtocol('用户协议')"> 《用户协议》 </view>
-                <view class="agreement-text">与</view>
-                <view class="tcp-text" @tap.stop="onProtocol('隐私协议')"> 《隐私协议》 </view>
-              </view>
-            </view>
-          </view>
-          
-          <!-- 拒绝选项 -->
-          <view class="agreement-option">
-            <view class="radio ss-flex ss-col-center" @tap="onRefuse">
-              <radio
-                :checked="state.protocol === false"
-                color="#ff4d4f"
-                style="transform: scale(0.8)"
-                @tap.stop="onRefuse"
-              />
-              <view class="agreement-text ss-flex ss-col-center ss-m-l-8">
-                我拒绝遵守
-                <view class="tcp-text" @tap.stop="onProtocol('用户协议')"> 《用户协议》 </view>
-                <view class="agreement-text">与</view>
-                <view class="tcp-text" @tap.stop="onProtocol('隐私协议')"> 《隐私协议》 </view>
-              </view>
-            </view>
+        <view class="agreement-row ss-flex ss-col-center" @tap="toggleProtocol">
+          <radio
+            :checked="state.protocol"
+            color="var(--ui-BG-Main)"
+            style="transform: scale(0.8)"
+            @tap.stop="toggleProtocol"
+          />
+          <view class="agreement-text ss-flex ss-col-center ss-m-l-8">
+            我已阅读并同意
+            <view class="tcp-text" @tap.stop="onProtocol('用户协议')">《用户协议》</view>
+            <view class="tcp-text" @tap.stop="onProtocol('隐私政策')">《隐私政策》</view>
           </view>
         </view>
       </view>
+
       <view class="safe-box" />
     </view>
   </su-popup>
@@ -147,36 +76,26 @@
   import changePassword from './components/change-password.vue';
   import mpAuthorization from './components/mp-authorization.vue';
   import { closeAuthModal, showAuthModal } from '@/sheep/hooks/useModal';
+  import { replayPendingAuthRequest } from '@/sheep/request';
 
   const modalStore = sheep.$store('modal');
-  // 授权弹窗类型
+  const appStore = sheep.$store('app');
+  const userStore = sheep.$store('user');
   const authType = computed(() => modalStore.auth);
 
   const state = reactive({
-    protocol: null, // null表示未选择，true表示同意，false表示拒绝
+    protocol: false,
   });
-
   const currentProtocol = ref(false);
 
-  // 同意协议
-  function onAgree() {
-    state.protocol = true;
-  }
-  
-  // 拒绝协议
-  function onRefuse() {
-    state.protocol = false;
+  function toggleProtocol() {
+    state.protocol = !state.protocol;
   }
 
-  // 查看协议
   function onProtocol(title) {
-    closeAuthModal();
-    sheep.$router.go('/pages/public/richtext', {
-      title,
-    });
+    sheep.$router.go('/pages/public/richtext', { title });
   }
 
-  // 点击登录 / 注册事件
   function onConfirm(e) {
     currentProtocol.value = e;
     setTimeout(() => {
@@ -184,47 +103,53 @@
     }, 1000);
   }
 
-  // 第三方授权登陆（微信小程序、Apple）
-  const thirdLogin = async (provider) => {
-    if (state.protocol !== true) {
-      currentProtocol.value = true;
-      setTimeout(() => {
-        currentProtocol.value = false;
-      }, 1000);
-      
-      if (state.protocol === false) {
-        sheep.$helper.toast('您已拒绝协议，无法继续登录');
-      } else {
-        sheep.$helper.toast('请选择是否同意协议');
-      }
-      return;
-    }
-    const loginRes = await sheep.$platform.useProvider(provider).login();
-    if (loginRes) {
-      const userInfo = await sheep.$store('user').getInfo();
-      closeAuthModal();
-      // 如果用户已经有头像和昵称，不需要再次授权
-      if (userInfo.avatar && userInfo.nickname) {
-        return;
-      }
+  function ensureAgreement() {
+    if (state.protocol) return true;
+    currentProtocol.value = true;
+    setTimeout(() => {
+      currentProtocol.value = false;
+    }, 1000);
+    sheep.$helper.toast('请先勾选并同意协议');
+    return false;
+  }
 
-      // 触发小程序授权信息弹框
-      // #ifdef MP-WEIXIN
-      showAuthModal('mpAuthorization');
-      // #endif
-    }
-  };
+  async function handleLoginSuccess() {
+    await userStore.updateUserData();
+    closeAuthModal();
+    await replayPendingAuthRequest();
+    await appStore.resumePendingAction();
+  }
 
-  // 微信小程序的“手机号快速验证”：https://developers.weixin.qq.com/miniprogram/dev/framework/open-ability/getPhoneNumber.html
   const getPhoneNumber = async (e) => {
+    if (!ensureAgreement()) return;
     if (e.detail.errMsg !== 'getPhoneNumber:ok') {
-      sheep.$helper.toast('快捷登录失败');
+      sheep.$helper.toast('未授权手机号，您仍可使用短信或账号密码登录');
       return;
     }
-    let result = await sheep.$platform.useProvider().mobileLogin(e.detail);
-    if (result) {
-      closeAuthModal();
+
+    const loginCodeRes = await uni.login();
+    if (loginCodeRes.errMsg !== 'login:ok' || !loginCodeRes.code) {
+      sheep.$helper.toast('微信预登录失败，请稍后重试');
+      return;
     }
+
+    let loginSessionId = appStore.loginSessionId;
+    if (!loginSessionId) {
+      loginSessionId = await appStore.prepareWechatPrelogin(true);
+    }
+
+    const { code } = await sheep.$api.auth.wechatPhoneLogin(
+      e.detail.code,
+      loginCodeRes.code,
+      loginSessionId,
+    );
+
+    if (code === 0) {
+      await handleLoginSuccess();
+      return;
+    }
+
+    sheep.$helper.toast('登录失败，请改用短信验证码或账号密码登录');
   };
 </script>
 
@@ -244,41 +169,43 @@
     }
   }
 
-  .register-box {
-    position: relative;
-    justify-content: center;
-    .register-btn {
-      color: #999999;
-      font-size: 30rpx;
-      font-weight: 500;
-    }
-    .register-title {
-      color: #999999;
-      font-size: 30rpx;
-      font-weight: 400;
-      margin-right: 24rpx;
-    }
-    .or-title {
-      margin: 0 16rpx;
-      color: #999999;
-      font-size: 30rpx;
-      font-weight: 400;
-    }
-    .login-btn {
-      color: var(--ui-BG-Main);
-      font-size: 30rpx;
-      font-weight: 500;
-    }
-    .circle {
-      position: absolute;
-      right: 0rpx;
-      top: 18rpx;
-      width: 8rpx;
-      height: 8rpx;
-      border-radius: 8rpx;
-      background: var(--ui-BG-Main);
-    }
+  .wechat-login-box {
+    padding-top: 20rpx;
   }
+
+  .wechat-login-btn {
+    width: 100%;
+    height: 88rpx;
+    border-radius: 44rpx;
+    background: #07c160;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 30rpx;
+    font-weight: 500;
+  }
+
+  .switch-login {
+    color: #666;
+    font-size: 26rpx;
+  }
+
+  .switch-item {
+    color: var(--ui-BG-Main);
+    padding: 0 16rpx;
+  }
+
+  .split {
+    color: #bbb;
+  }
+
+  .agreement-row {
+    width: 100%;
+    justify-content: center;
+    margin-top: 28rpx;
+  }
+
   .safe-box {
     height: calc(constant(safe-area-inset-bottom) / 5 * 3);
     height: calc(env(safe-area-inset-bottom) / 5 * 3);
@@ -286,28 +213,11 @@
 
   .tcp-text {
     color: var(--ui-BG-Main);
+    margin-left: 8rpx;
   }
 
   .agreement-text {
     color: $dark-9;
-  }
-  
-  .agreement-title {
-    font-size: 28rpx;
-    color: $dark-9;
-    text-align: left;
-    width: 100%;
-    padding-left: 60rpx;
-  }
-  
-  .agreement-options-container {
-    width: 100%;
-    padding-left: 100rpx;
-  }
-  
-  .agreement-option {
-    width: 100%;
-    display: flex;
-    justify-content: flex-start;
+    flex-wrap: wrap;
   }
 </style>
